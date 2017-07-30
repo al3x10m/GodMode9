@@ -7,7 +7,7 @@ void main(int argc, char** argv)
 {
     (void) argc; // unused for now
     (void) argv; // unused for now
-    
+
     // Turn on backlight
     I2C_writeReg(I2C_DEV_MCU, 0x22, 0x2A);
     

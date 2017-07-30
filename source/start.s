@@ -5,10 +5,6 @@
 @ make sure not to clobber r0-r2
 .global _start
 _start:
-    .rept 12
-    nop
-    .endr
-
     @ Switch to supervisor mode and disable interrupts
     msr cpsr_c, #0xD3
 
@@ -32,7 +28,12 @@ _start:
         strge r6, [r4, r5]
         bge .Lbincopyloop
 
+    ldr r3, =0xFFFF0830       @ Writeback & Invalidate DCache
+    blx r3
+
     mov lr, #0
+    mcr p15, 0, lr, c7, c5, 0 @ Invalidate ICache
+
     bx r4
 
 _start_gm:
@@ -47,10 +48,6 @@ _start_gm:
     cmp r2, r4      @ magic word
     movne r9, #0
 
-    @ Clean & Flush / Writeback & Invalidate all DCache
-    ldr r4, =0xFFFF0830
-    blx r4
-    
     @ Disable caches / mpu
     mrc p15, 0, r4, c1, c0, 0  @ read control register
     bic r4, #(1<<16)           @ - dtcm disable (mandated by the docs, before you change the dtcm's address)
@@ -83,7 +80,7 @@ _start_gm:
     ldr r0, =0xFFFF001F	@ ffff0000 64k  | bootrom (unprotected / protected)
     ldr r1, =0x3000801B	@ 30008000 16k  | dtcm
     ldr r2, =0x01FF801D	@ 01ff8000 32k  | itcm
-    ldr r3, =0x08000029	@ 08000000 2M   | arm9 mem (O3DS / N3DS) 
+    ldr r3, =0x08000029	@ 08000000 2M   | arm9 mem (O3DS / N3DS)
     ldr r4, =0x10000029	@ 10000000 2M   | io mem (ARM9 / first 2MB)
     ldr r5, =0x20000037	@ 20000000 256M | fcram (O3DS / N3DS)
     ldr r6, =0x1FF00027	@ 1FF00000 1M   | dsp / axi wram
@@ -129,5 +126,3 @@ _start_gm:
     mov r0, r9
     mov r1, r10
     b main
-
-.pool
